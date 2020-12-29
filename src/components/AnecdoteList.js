@@ -1,13 +1,12 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { connect } from 'react-redux'
 import { vote } from '../reducers/anecdoteReducer'
 import { setNotification } from '../reducers/notificationReducer'
 
-const Anecdote = ({ anecdote }) => {
-    const dispatch = useDispatch()
+const Anecdote = ({ anecdote,props }) => {
     const handleClick = () => {
-        dispatch(vote(anecdote.id))
-        dispatch(setNotification(`You voted for '${anecdote.content}'`, 5000))
+        props.vote(anecdote.id)
+        props.setNotification(`You voted for '${anecdote.content}'`, 5000)
     }
 
     return (
@@ -20,26 +19,40 @@ const Anecdote = ({ anecdote }) => {
     )
 }
 
-const AnecdoteList = () => {
-    const anecdotes = useSelector(state => state.anecdote)
-    const filteredKey = useSelector(state => state.filtered)
-
-
-    const filteredAnecdote = (filteredKey !== '')
-        ? anecdotes.filter(person => person.content.toLowerCase().includes(filteredKey.toLowerCase()))
-        : anecdotes
-    const sortedList = filteredAnecdote.sort((a, b) => b.votes - a.votes)
-    
+const AnecdoteList = (props) => {
     return (
         <ul>
-            {sortedList.map(anecdote =>
+            {props.anecdotes.map(anecdote =>
                 <Anecdote
                     key={anecdote.id}
                     anecdote={anecdote}
+                    props = {props}
                 />
             )}
         </ul>
     )
 }
+const mapStateToProps = (state) => {
+    if (state.filtered !== '') {
+        return {
+            anecdotes: state.anecdote.filter(person => person.content.toLowerCase()
+                .includes(state.filtered.toLowerCase()))
+                .sort((a, b) => b.votes - a.votes)
+        }
+    }
+    return {
+        anecdotes: state.anecdote.sort((a, b) => b.votes - a.votes)
+    }
 
-export default AnecdoteList
+}
+
+const mapDispatchToProps = {
+    vote,
+    setNotification
+}
+const ConnectedNotes = connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(AnecdoteList)
+
+export default ConnectedNotes
